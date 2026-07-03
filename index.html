@@ -1,0 +1,453 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dein Assistent</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper: #FBF6EE;
+    --card: #FFFDF8;
+    --ink: #241F1C;
+    --ink-soft: #6B6259;
+    --line: #E7DDCC;
+    --marigold: #E8A33D;
+    --marigold-ink: #5C3D0E;
+    --navy: #33475B;
+    --navy-ink: #FFFFFF;
+    --error: #B8492F;
+  }
+  *{ box-sizing:border-box; }
+  html,body{
+    margin:0; padding:0; height:100%;
+    background: var(--paper);
+    color: var(--ink);
+    font-family:'Inter', sans-serif;
+  }
+  body{
+    display:flex;
+    flex-direction:column;
+    min-height:100vh;
+  }
+  .bg-texture{
+    position:fixed; inset:0; pointer-events:none; opacity:0.35;
+    background-image: radial-gradient(circle at 1px 1px, var(--line) 1px, transparent 0);
+    background-size: 22px 22px;
+    z-index:0;
+  }
+  .shell{
+    position:relative; z-index:1;
+    width:100%; max-width:640px;
+    margin:0 auto;
+    padding:2.5rem 1.25rem 2rem;
+    display:flex; flex-direction:column;
+    flex:1;
+    min-height:100vh;
+  }
+
+  /* ---- header ---- */
+  .brand{
+    display:flex; align-items:center; gap:14px;
+    margin-bottom:1.75rem;
+  }
+  .orb{
+    width:46px; height:46px; border-radius:50%;
+    background: var(--marigold);
+    position:relative; flex-shrink:0;
+    display:flex; align-items:center; justify-content:center;
+  }
+  .orb::after{
+    content:''; position:absolute; inset:-6px;
+    border-radius:50%; border:1.5px solid var(--marigold);
+    opacity:0.5;
+  }
+  .orb.thinking{ animation: breathe 1.1s ease-in-out infinite; }
+  @keyframes breathe{
+    0%,100%{ transform:scale(1); }
+    50%{ transform:scale(1.12); }
+  }
+  .orb-core{
+    width:14px; height:14px; border-radius:50%;
+    background: var(--marigold-ink);
+    opacity:0.85;
+  }
+  .brand-text h1{
+    font-family:'Fraunces', serif;
+    font-weight:600; font-size:22px; margin:0;
+    letter-spacing:-0.01em;
+  }
+  .brand-text p{
+    margin:2px 0 0; font-size:13px; color: var(--ink-soft);
+  }
+  .icon-btn{
+    margin-left:auto;
+    width:36px; height:36px; border-radius:10px;
+    border:1px solid var(--line); background:var(--card);
+    display:flex; align-items:center; justify-content:center;
+    cursor:pointer; color:var(--ink-soft);
+    transition: border-color .15s ease, color .15s ease;
+  }
+  .icon-btn:hover{ border-color: var(--ink-soft); color: var(--ink); }
+
+  /* ---- setup card ---- */
+  .setup-card{
+    background: var(--card);
+    border:1px solid var(--line);
+    border-radius:18px;
+    padding:2.25rem 1.75rem;
+    margin-top:1rem;
+    text-align:left;
+  }
+  .setup-card .eyebrow{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:11px; letter-spacing:0.08em; text-transform:uppercase;
+    color: var(--marigold-ink); margin:0 0 8px;
+  }
+  .setup-card h2{
+    font-family:'Fraunces', serif; font-weight:500;
+    font-size:26px; margin:0 0 8px; letter-spacing:-0.01em;
+  }
+  .setup-card p.desc{
+    color: var(--ink-soft); font-size:14.5px; line-height:1.6; margin:0 0 1.75rem;
+  }
+  label{
+    display:block; font-size:13px; font-weight:500; color:var(--ink);
+    margin-bottom:6px;
+  }
+  .field{ margin-bottom:1.25rem; }
+  .hint{
+    font-size:12.5px; color:var(--ink-soft); margin-top:6px; line-height:1.5;
+  }
+  input[type=text], input[type=password]{
+    width:100%; padding:11px 13px;
+    border:1px solid var(--line); border-radius:10px;
+    background: var(--paper); color:var(--ink);
+    font-family:'Inter', sans-serif; font-size:14.5px;
+    outline:none;
+  }
+  input[type=text]:focus, input[type=password]:focus{
+    border-color: var(--marigold);
+    box-shadow: 0 0 0 3px rgba(232,163,61,0.22);
+  }
+  .btn-primary{
+    width:100%; padding:12px; border:none; border-radius:10px;
+    background: var(--marigold); color: var(--marigold-ink);
+    font-family:'Inter', sans-serif; font-weight:600; font-size:14.5px;
+    cursor:pointer;
+    transition: transform .1s ease;
+  }
+  .btn-primary:hover{ transform: translateY(-1px); }
+  .btn-primary:active{ transform: translateY(0); }
+  .link-btn{
+    background:none; border:none; color:var(--ink-soft);
+    font-size:13px; text-decoration:underline; cursor:pointer;
+    padding:0; margin-top:0.75rem;
+  }
+
+  /* ---- chat ---- */
+  .chat-card{
+    display:none;
+    flex-direction:column;
+    flex:1;
+    background: var(--card);
+    border:1px solid var(--line);
+    border-radius:18px;
+    overflow:hidden;
+    min-height:480px;
+  }
+  .messages{
+    flex:1; overflow-y:auto;
+    padding:1.5rem;
+    display:flex; flex-direction:column; gap:14px;
+  }
+  .msg-row{ display:flex; }
+  .msg-row.user{ justify-content:flex-end; }
+  .bubble{
+    max-width:78%;
+    padding:10px 14px;
+    border-radius:14px;
+    font-size:14.5px; line-height:1.6;
+    white-space:pre-wrap;
+  }
+  .msg-row.user .bubble{
+    background: var(--navy); color: var(--navy-ink);
+    border-bottom-right-radius:4px;
+  }
+  .msg-row.bot .bubble{
+    background: var(--paper); color: var(--ink);
+    border:1px solid var(--line);
+    border-bottom-left-radius:4px;
+  }
+  .msg-row.error .bubble{
+    background: #FBEAE5; color: var(--error);
+    border:1px solid #ECC3B7;
+  }
+  .typing-dots{
+    display:flex; gap:4px; padding:4px 2px;
+  }
+  .typing-dots span{
+    width:6px; height:6px; border-radius:50%;
+    background: var(--ink-soft);
+    animation: bounce 1.2s infinite ease-in-out;
+  }
+  .typing-dots span:nth-child(2){ animation-delay:0.15s; }
+  .typing-dots span:nth-child(3){ animation-delay:0.3s; }
+  @keyframes bounce{
+    0%,60%,100%{ transform: translateY(0); opacity:0.5; }
+    30%{ transform: translateY(-4px); opacity:1; }
+  }
+
+  .composer{
+    display:flex; gap:8px;
+    padding:0.9rem 1.1rem;
+    border-top:1px solid var(--line);
+    background: var(--card);
+  }
+  .composer input{
+    flex:1; padding:11px 14px;
+    border:1px solid var(--line); border-radius:24px;
+    background: var(--paper); font-family:'Inter', sans-serif; font-size:14.5px;
+    outline:none; color:var(--ink);
+  }
+  .composer input:focus{
+    border-color: var(--marigold);
+    box-shadow: 0 0 0 3px rgba(232,163,61,0.22);
+  }
+  .send-btn{
+    width:42px; height:42px; border-radius:50%;
+    border:none; background: var(--marigold); color: var(--marigold-ink);
+    display:flex; align-items:center; justify-content:center;
+    cursor:pointer; flex-shrink:0;
+  }
+  .send-btn:disabled{ opacity:0.5; cursor:default; }
+
+  footer{
+    text-align:center; font-size:12px; color:var(--ink-soft);
+    margin-top:1.25rem;
+  }
+
+  @media (max-width: 480px){
+    .shell{ padding:1.5rem 1rem 1rem; }
+    .setup-card{ padding:1.5rem 1.25rem; }
+  }
+</style>
+</head>
+<body>
+<div class="bg-texture"></div>
+<div class="shell">
+
+  <div class="brand">
+    <div class="orb" id="orb"><div class="orb-core"></div></div>
+    <div class="brand-text">
+      <h1 id="header-name">Dein Assistent</h1>
+      <p id="header-sub">noch nicht eingerichtet</p>
+    </div>
+    <button class="icon-btn" id="settings-btn" title="Einstellungen" style="display:none;">⚙</button>
+  </div>
+
+  <!-- SETUP -->
+  <div class="setup-card" id="setup-card">
+    <p class="eyebrow">Einrichtung</p>
+    <h2>Bauen wir deinen Assistenten</h2>
+    <p class="desc">Gib ihm einen Namen und deinen Anthropic-API-Key. Beides bleibt nur in deinem Browser gespeichert (localStorage) und wird an niemanden außer die Anthropic-API geschickt.</p>
+
+    <div class="field">
+      <label for="name-input">Name des Assistenten</label>
+      <input type="text" id="name-input" placeholder="z. B. Nova, Otto, Friday">
+    </div>
+
+    <div class="field">
+      <label for="key-input">Anthropic-API-Key</label>
+      <input type="password" id="key-input" placeholder="sk-ant-...">
+      <p class="hint">Du bekommst einen Key auf console.anthropic.com unter "API Keys". Ohne Key kann der Assistent nicht antworten.</p>
+    </div>
+
+    <button class="btn-primary" id="start-btn">Assistent starten</button>
+  </div>
+
+  <!-- CHAT -->
+  <div class="chat-card" id="chat-card">
+    <div class="messages" id="messages"></div>
+    <div class="composer">
+      <input type="text" id="chat-input" placeholder="Schreib etwas...">
+      <button class="send-btn" id="send-btn" aria-label="Senden">→</button>
+    </div>
+  </div>
+
+  <footer>Läuft lokal in deinem Browser · dein API-Key verlässt nie dieses Gerät</footer>
+</div>
+
+<script>
+(function(){
+  const setupCard = document.getElementById('setup-card');
+  const chatCard = document.getElementById('chat-card');
+  const nameInput = document.getElementById('name-input');
+  const keyInput = document.getElementById('key-input');
+  const startBtn = document.getElementById('start-btn');
+  const settingsBtn = document.getElementById('settings-btn');
+  const headerName = document.getElementById('header-name');
+  const headerSub = document.getElementById('header-sub');
+  const messagesEl = document.getElementById('messages');
+  const chatInput = document.getElementById('chat-input');
+  const sendBtn = document.getElementById('send-btn');
+  const orb = document.getElementById('orb');
+
+  let botName = localStorage.getItem('jarvis_name') || '';
+  let apiKey = localStorage.getItem('jarvis_key') || '';
+  let history = JSON.parse(localStorage.getItem('jarvis_history') || '[]');
+
+  function addBubble(role, text){
+    const row = document.createElement('div');
+    row.className = 'msg-row ' + role;
+    const bubble = document.createElement('div');
+    bubble.className = 'bubble';
+    bubble.textContent = text;
+    row.appendChild(bubble);
+    messagesEl.appendChild(row);
+    messagesEl.scrollTop = messagesEl.scrollHeight;
+    return bubble;
+  }
+
+  function addTyping(){
+    const row = document.createElement('div');
+    row.className = 'msg-row bot';
+    row.id = 'typing-row';
+    const bubble = document.createElement('div');
+    bubble.className = 'bubble';
+    bubble.innerHTML = '<div class="typing-dots"><span></span><span></span><span></span></div>';
+    row.appendChild(bubble);
+    messagesEl.appendChild(row);
+    messagesEl.scrollTop = messagesEl.scrollHeight;
+  }
+  function removeTyping(){
+    const row = document.getElementById('typing-row');
+    if(row) row.remove();
+  }
+
+  function renderHistory(){
+    messagesEl.innerHTML = '';
+    if(history.length === 0){
+      addBubble('bot', 'Hey, ich bin ' + botName + '! Freundlich, hilfsbereit und mit einem Hang zu schlechten Wortspielen. Was liegt an?');
+    } else {
+      history.forEach(m => addBubble(m.role === 'user' ? 'user' : 'bot', m.content));
+    }
+  }
+
+  function startChat(){
+    setupCard.style.display = 'none';
+    chatCard.style.display = 'flex';
+    settingsBtn.style.display = 'flex';
+    headerName.textContent = botName;
+    headerSub.textContent = 'bereit';
+    renderHistory();
+    chatInput.focus();
+  }
+
+  function showSetup(prefill){
+    chatCard.style.display = 'none';
+    settingsBtn.style.display = 'none';
+    setupCard.style.display = 'block';
+    headerName.textContent = 'Dein Assistent';
+    headerSub.textContent = 'noch nicht eingerichtet';
+    if(prefill){
+      nameInput.value = botName;
+      keyInput.value = apiKey;
+    }
+  }
+
+  startBtn.addEventListener('click', () => {
+    const n = nameInput.value.trim();
+    const k = keyInput.value.trim();
+    if(!n){ nameInput.focus(); return; }
+    if(!k){ keyInput.focus(); return; }
+    const nameChanged = n !== botName;
+    botName = n;
+    apiKey = k;
+    localStorage.setItem('jarvis_name', botName);
+    localStorage.setItem('jarvis_key', apiKey);
+    if(nameChanged){
+      history = [];
+      localStorage.setItem('jarvis_history', '[]');
+    }
+    startChat();
+  });
+
+  settingsBtn.addEventListener('click', () => showSetup(true));
+
+  async function sendMessage(){
+    const text = chatInput.value.trim();
+    if(!text || !apiKey) return;
+    chatInput.value = '';
+    sendBtn.disabled = true;
+    addBubble('user', text);
+    history.push({role:'user', content:text});
+    localStorage.setItem('jarvis_history', JSON.stringify(history.slice(-30)));
+    addTyping();
+    orb.classList.add('thinking');
+    headerSub.textContent = 'denkt nach...';
+
+    const systemPrompt = 'Du bist ' + botName + ', ein freundlicher, netter und witziger persönlicher Assistent im Stil von Jarvis. ' +
+      'Du hilfst gern bei allem Möglichen, machst dabei lockere, warmherzige Scherze und bleibst dabei kompetent und hilfreich. ' +
+      'Antworte auf Deutsch, in kurzen bis mittellangen Absätzen, ohne Emojis.';
+
+    try{
+      const response = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-api-key': apiKey,
+          'anthropic-version': '2023-06-01',
+          'anthropic-dangerous-direct-browser-access': 'true'
+        },
+        body: JSON.stringify({
+          model: 'claude-sonnet-4-6',
+          max_tokens: 1000,
+          system: systemPrompt,
+          messages: history.map(m => ({role: m.role, content: m.content}))
+        })
+      });
+
+      removeTyping();
+      orb.classList.remove('thinking');
+      headerSub.textContent = 'bereit';
+
+      if(!response.ok){
+        const errBody = await response.json().catch(() => ({}));
+        const msg = (errBody && errBody.error && errBody.error.message) || ('Fehler ' + response.status);
+        addBubble('error', 'Da ist etwas schiefgelaufen: ' + msg);
+        sendBtn.disabled = false;
+        return;
+      }
+
+      const data = await response.json();
+      let reply = '...';
+      if(data && data.content){
+        reply = data.content.map(b => b.text || '').filter(Boolean).join('\n');
+      }
+      addBubble('bot', reply);
+      history.push({role:'assistant', content:reply});
+      localStorage.setItem('jarvis_history', JSON.stringify(history.slice(-30)));
+    }catch(e){
+      removeTyping();
+      orb.classList.remove('thinking');
+      headerSub.textContent = 'bereit';
+      addBubble('error', 'Verbindung fehlgeschlagen. Prüf deinen API-Key und deine Internetverbindung.');
+    }
+    sendBtn.disabled = false;
+  }
+
+  sendBtn.addEventListener('click', sendMessage);
+  chatInput.addEventListener('keydown', (e) => { if(e.key === 'Enter') sendMessage(); });
+
+  if(botName && apiKey){
+    startChat();
+  } else {
+    if(botName) nameInput.value = botName;
+  }
+})();
+</script>
+</body>
+</html>
