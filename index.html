@@ -474,27 +474,47 @@
     return textBlock ? textBlock.text : '(keine Antwort erhalten)';
   }
 
+  function sleep(ms){ return new Promise(r=>setTimeout(r, ms)); }
+
   async function askGemini(){
     const url = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent';
-    const response = await fetch(url, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "x-goog-api-key": geminiKey
-      },
-      body: JSON.stringify({
-        system_instruction: { parts: [{ text: SYSTEM_PROMPT }] },
-        contents: toGeminiContents(history)
-      })
+    const body = JSON.stringify({
+      system_instruction: { parts: [{ text: SYSTEM_PROMPT }] },
+      contents: toGeminiContents(history)
     });
-    if(!response.ok){
-      const errBody = await response.text();
-      throw new Error('Gemini API Fehler ' + response.status + ': ' + errBody.slice(0,120));
+    const maxAttempts = 3;
+    let lastErr = null;
+    for(let attempt=1; attempt<=maxAttempts; attempt++){
+      try{
+        const response = await fetch(url, {
+          method: "POST",
+          headers: { "Content-Type": "application/json", "x-goog-api-key": geminiKey },
+          body
+        });
+        if(response.status===503 || response.status===429){
+          lastErr = new Error('Gemini ist gerade überlastet (Fehler ' + response.status + ').');
+          if(attempt<maxAttempts){
+            coreHint.textContent = 'Gemini überlastet, Versuch ' + (attempt+1) + ' von ' + maxAttempts + ' …';
+            await sleep(attempt*1500);
+            continue;
+          }
+          throw lastErr;
+        }
+        if(!response.ok){
+          const errBody = await response.text();
+          throw new Error('Gemini API Fehler ' + response.status + ': ' + errBody.slice(0,120));
+        }
+        const data = await response.json();
+        const cand = data.candidates && data.candidates[0];
+        const text = cand && cand.content && cand.content.parts && cand.content.parts.map(p=>p.text||'').join('');
+        coreHint.textContent = 'Text eingeben oder Mikrofon aktivieren';
+        return text || '(keine Antwort erhalten)';
+      }catch(err){
+        lastErr = err;
+        if(attempt>=maxAttempts) throw lastErr;
+      }
     }
-    const data = await response.json();
-    const cand = data.candidates && data.candidates[0];
-    const text = cand && cand.content && cand.content.parts && cand.content.parts.map(p=>p.text||'').join('');
-    return text || '(keine Antwort erhalten)';
+    throw lastErr;
   }
 
   async function askJarvis(userText){
